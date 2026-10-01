@@ -31,6 +31,9 @@ class DocumentORM(Base):
     title: Mapped[str] = mapped_column(String(255))
     content: Mapped[str] = mapped_column(Text)
     disclaimer: Mapped[str] = mapped_column(Text)
+    owner_name: Mapped[str] = mapped_column(String(100), default="")
+    property_address: Mapped[str] = mapped_column(String(300), default="")
+    overdue_amount: Mapped[float] = mapped_column(Float, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -46,7 +49,7 @@ class OrderORM(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
-engine = create_engine(settings.database_url, future=True)
+engine = create_engine(settings.database_url, future=True, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 

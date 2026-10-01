@@ -1,5 +1,3 @@
-import json
-import os
 from datetime import datetime, timezone
 
 from .schemas.common import DocumentGenerateRequest, GeneratedDocument
@@ -41,7 +39,7 @@ def generate_document(payload: DocumentGenerateRequest) -> GeneratedDocument:
     }[payload.document_type]
     disclaimer = "本内容由系统根据用户填写信息生成，仅供文书草拟和信息整理参考，不构成法律意见，也不保证特定法律效果。正式使用前请核验事实、合同及当地法规，必要时咨询执业律师。"
     return GeneratedDocument(
-        id=f"doc_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+        id=f"doc_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",
         document_type=payload.document_type,
         title=title,
         content=build_doc_content(payload),

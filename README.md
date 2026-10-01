@@ -1,14 +1,37 @@
-# 最终产品化增强版
+# 真实文档导出与数据库
 
-## 已实现
+本版本增加：
 
-- SQLite/PostgreSQL 兼容的 SQLAlchemy 持久化：用户、订单、文书
-- PBKDF2 密码哈希与 JWT 登录令牌
-- OpenAI-compatible AI 生成接口，未配置密钥时自动使用模板回退
-- Stripe Checkout 可选接入；未配置 Stripe 时提供本地 mock 支付
-- CSV/XLSX 上传解析与批次下载
-- 文书在线生成、复制、TXT 下载
-- FastAPI Swagger 文档
+- 生成文书持久化到 SQLAlchemy 数据库
+- 真实 Word（DOCX）导出
+- 真实 PDF 导出，使用 `STSong-Light` 支持中文
+- TXT 导出
+- 文档列表显示真实业主、地址和金额
+- SQLite 旧库启动时自动补列；生产可使用 PostgreSQL
+
+## 数据库配置
+
+本地演示：
+
+```env
+DATABASE_URL=sqlite:///./app.db
+```
+
+生产 PostgreSQL：
+
+```env
+DATABASE_URL=postgresql+psycopg://user:password@host:5432/wuye
+```
+
+首次启动会执行 SQLAlchemy `create_all`；SQLite 旧数据库会执行幂等补列。生产环境建议接入 Alembic 迁移流程，不要依赖自动建表。
+
+## 导出接口
+
+生成文书后使用返回的 `id`：
+
+- `GET /api/documents/{id}/download?format=pdf`
+- `GET /api/documents/{id}/download?format=docx`
+- `GET /api/documents/{id}/download?format=txt`
 
 ## 启动
 
@@ -16,23 +39,3 @@
 cp .env.example .env
 docker compose up --build
 ```
-
-生产环境请至少修改 `JWT_SECRET`，并配置 PostgreSQL、`OPENAI_API_KEY` 与 Stripe 密钥。将 `DATABASE_URL` 设置为例如：
-
-```text
-postgresql+psycopg://user:password@db:5432/wuye
-```
-
-## 真实 AI
-
-填写 `OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `OPENAI_MODEL`。DeepSeek 等 OpenAI-compatible 服务可通过修改 `OPENAI_BASE_URL` 与模型名接入。系统调用失败会回退到确定性模板，不会阻塞业务流程。
-
-## 支付
-
-- `STRIPE_SECRET_KEY` 为空：使用 mock 支付，仅适合本地演示。
-- 配置 Stripe：调用 `/api/payments/create`，请求 `{"order_id":"...","method":"stripe"}` 获取 Checkout URL。
-- 生产环境必须使用 Stripe 官方签名校验处理 webhook，并把支付成功以 webhook 作为最终依据；当前 webhook 入口仅是演示适配层。
-
-## 合规
-
-所有生成文书均为草稿和信息整理参考，不构成法律意见，不保证特定法律效果。上线前应补充隐私政策、数据保留策略、访问控制、审计日志和正式支付 webhook 验签。

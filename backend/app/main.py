@@ -1,8 +1,7 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-
 from .api.routes.auth import router as auth_router
 from .api.routes.documents import router as documents_router
 from .api.routes.calculator import router as calculator_router
@@ -14,28 +13,17 @@ from .api.routes.lawyers import router as lawyers_router
 from .api.routes.dashboard import router as dashboard_router
 from .config import settings
 from .db.database import init_db
+from .db.migrations import upgrade
 from .schemas.common import HealthResponse
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+    upgrade()
     yield
 
-app = FastAPI(
-    title="物业易催款 API",
-    version="1.0.0",
-    description="物业费催缴文书生成与企业管理 API",
-    lifespan=lifespan,
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+app = FastAPI(title="物业易催款 API", version="1.1.0", description="物业费催缴文书生成与企业管理 API", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=settings.allowed_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(documents_router, prefix="/api/documents", tags=["documents"])
 app.include_router(calculator_router, prefix="/api/calculator", tags=["calculator"])
