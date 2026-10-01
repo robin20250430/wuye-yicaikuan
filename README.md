@@ -1,6 +1,6 @@
 # 真实文档导出与数据库
 
-本版本增加：
+当前版本增加：
 
 - 生成文书持久化到 SQLAlchemy 数据库
 - 真实 Word（DOCX）导出
@@ -23,7 +23,7 @@ DATABASE_URL=sqlite:///./app.db
 DATABASE_URL=postgresql+psycopg://user:password@host:5432/wuye
 ```
 
-首次启动会执行 SQLAlchemy `create_all`；SQLite 旧数据库会执行幂等补列。生产环境建议接入 Alembic 迁移流程，不要依赖自动建表。
+首次启动执行 SQLAlchemy `create_all`；SQLite 旧数据库启动时执行幂等补列。生产环境建议改用 Alembic 迁移流程。
 
 ## 导出接口
 

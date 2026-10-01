@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from .schemas.common import DocumentGenerateRequest, GeneratedDocument
+from ..schemas.common import DocumentGenerateRequest, GeneratedDocument
 
 
 def build_doc_content(payload: DocumentGenerateRequest) -> str:
@@ -37,12 +37,11 @@ def generate_document(payload: DocumentGenerateRequest) -> GeneratedDocument:
         "lawyer_letter": "物业费催缴律师函（草稿）",
         "litigation_notice": "起诉前告知书（草稿）",
     }[payload.document_type]
-    disclaimer = "本内容由系统根据用户填写信息生成，仅供文书草拟和信息整理参考，不构成法律意见，也不保证特定法律效果。正式使用前请核验事实、合同及当地法规，必要时咨询执业律师。"
     return GeneratedDocument(
         id=f"doc_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}",
         document_type=payload.document_type,
         title=title,
         content=build_doc_content(payload),
-        disclaimer=disclaimer,
+        disclaimer="本内容由系统根据用户填写信息生成，仅供文书草拟和信息整理参考，不构成法律意见，也不保证特定法律效果。正式使用前请核验事实、合同及当地法规，必要时咨询执业律师。",
         created_at=datetime.now(timezone.utc),
     )

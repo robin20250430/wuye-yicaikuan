@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from .api.routes.auth import router as auth_router
 from .api.routes.documents import router as documents_router
 from .api.routes.calculator import router as calculator_router

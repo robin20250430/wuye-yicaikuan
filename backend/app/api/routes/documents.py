@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from io import BytesIO
-from uuid import uuid4
 
 from docx import Document as WordDocument
 from fastapi import APIRouter, HTTPException, Query, Response
@@ -9,9 +8,9 @@ from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfgen import canvas
 from sqlalchemy import select
 
-from ...db.database import DocumentORM, SessionLocal
-from ...schemas.common import DocumentGenerateRequest, GeneratedDocument
-from ...services.ai_service import generate_document_with_ai_fallback
+from ..db.database import DocumentORM, SessionLocal
+from ..schemas.common import DocumentGenerateRequest, GeneratedDocument
+from ..services.ai_service import generate_document_with_ai_fallback
 
 router = APIRouter()
 
@@ -42,8 +41,7 @@ def persist_document(payload: DocumentGenerateRequest, generated: GeneratedDocum
 
 @router.post("/generate", response_model=GeneratedDocument)
 def create_document(payload: DocumentGenerateRequest) -> GeneratedDocument:
-    generated = generate_document_with_ai_fallback(payload)
-    return persist_document(payload, generated)
+    return persist_document(payload, generate_document_with_ai_fallback(payload))
 
 
 @router.get("/templates")
@@ -56,26 +54,29 @@ def get_templates() -> list[dict]:
     ]
 
 
-def get_document_or_404(document_id: str) -> DocumentORM:
+def get_document(document_id: str) -> DocumentORM:
     with SessionLocal() as db:
         row = db.scalar(select(DocumentORM).where(DocumentORM.id == document_id))
-        if not row:
+        if row is None:
             raise HTTPException(status_code=404, detail="文书不存在")
-        # Detach a plain value copy before closing the session.
         return DocumentORM(
-            id=row.id, document_type=row.document_type, title=row.title,
-            content=row.content, disclaimer=row.disclaimer,
-            owner_name=row.owner_name, property_address=row.property_address,
-            overdue_amount=row.overdue_amount, created_at=row.created_at,
+            id=row.id,
+            document_type=row.document_type,
+            title=row.title,
+            content=row.content,
+            disclaimer=row.disclaimer,
+            owner_name=row.owner_name,
+            property_address=row.property_address,
+            overdue_amount=row.overdue_amount,
+            created_at=row.created_at,
         )
 
 
 def build_docx(row: DocumentORM) -> bytes:
     document = WordDocument()
     document.add_heading(row.title, level=1)
-    for paragraph in row.content.split("\n"):
+    for paragraph in row.content.splitlines():
         document.add_paragraph(paragraph)
-    document.add_paragraph("")
     document.add_paragraph(f"提示：{row.disclaimer}")
     output = BytesIO()
     document.save(output)
@@ -86,6 +87,7 @@ def build_pdf(row: DocumentORM) -> bytes:
     output = BytesIO()
     pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
     pdf = canvas.Canvas(output)
+    pdf.setTitle(row.title)
     pdf.setFont("STSong-Light", 16)
     pdf.drawCentredString(300, 800, row.title)
     pdf.setFont("STSong-Light", 10)
@@ -103,7 +105,7 @@ def build_pdf(row: DocumentORM) -> bytes:
 
 @router.get("/{document_id}/download")
 def download_document(document_id: str, format: str = Query("pdf", pattern="^(pdf|docx|txt)$")) -> Response:
-    row = get_document_or_404(document_id)
+    row = get_document(document_id)
     if format == "pdf":
         content, media_type, extension = build_pdf(row), "application/pdf", "pdf"
     elif format == "docx":
