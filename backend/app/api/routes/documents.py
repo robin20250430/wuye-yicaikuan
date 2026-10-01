@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from ..schemas.common import DocumentGenerateRequest, GeneratedDocument
@@ -33,7 +33,7 @@ def get_templates() -> list[dict]:
 @router.post("/batch-upload")
 def upload_batch(rows: BatchUploadRequest) -> dict:
     if not rows.rows:
-        raise HTTPException(status_code=400, detail="没有可处理的数据行")
+        raise ValueError("没有可处理的数据行")
     return {
         "batch_id": str(uuid4()),
         "file_name": rows.file_name,

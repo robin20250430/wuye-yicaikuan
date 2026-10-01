@@ -35,7 +35,7 @@ def login(payload: UserLoginRequest) -> UserProfile:
     return UserProfile(**user)
 
 
-@router.get("/profile")
+@router.get("/profile", response_model=UserProfile)
 def profile(email: str) -> UserProfile:
     user = USERS.get(email)
     if not user:

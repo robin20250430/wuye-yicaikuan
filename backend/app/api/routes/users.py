@@ -1,14 +1,9 @@
 from datetime import datetime, timezone
-from uuid import uuid4
-
-from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ..schemas.common import UserCreateRequest, UserLoginRequest, UserProfile
+from .schemas.common import UserCreateRequest, UserLoginRequest, UserProfile
 
-router = APIRouter()
-
-USERS: dict[str, dict] = {}
+router_users = []
 
 
 class ListUserResponse(BaseModel):
@@ -16,15 +11,9 @@ class ListUserResponse(BaseModel):
     users: list[UserProfile]
 
 
-@router.get("/profile", response_model=UserProfile)
-def get_profile(email: str) -> UserProfile:
-    user = USERS.get(email)
-    if user is None:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    return UserProfile(**user)
+def register_user(email: str, password: str, company_name: str | None = None) -> UserProfile:
+    pass
 
 
-@router.get("/", response_model=ListUserResponse)
-def list_users() -> ListUserResponse:
-    items = [UserProfile(**user) for user in USERS.values()]
-    return ListUserResponse(total=len(items), users=items)
+def login_user(email: str, password: str) -> UserProfile:
+    pass

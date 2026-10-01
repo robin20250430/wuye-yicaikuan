@@ -91,3 +91,11 @@ class UserProfile(BaseModel):
     company_name: str | None = None
     role: str = "user"
     created_at: datetime
+
+class PaymentResponse(BaseModel):
+    payment_id: str
+    order_id: str
+    status: str
+    amount: float
+    method: str
+    created_at: datetime

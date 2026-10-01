@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { generateDocument, type GeneratePayload, type GeneratedDocument } from "../lib/api";
+import { generateDocument, type GeneratePayload } from "../lib/api";
+import DocumentPreview from "../components/DocumentPreview";
 
 const initial: GeneratePayload = {
   document_type: "notice",
@@ -18,9 +19,10 @@ const initial: GeneratePayload = {
 
 export default function GeneratePage() {
   const [form, setForm] = useState<GeneratePayload>(initial);
-  const [doc, setDoc] = useState<GeneratedDocument | null>(null);
+  const [doc, setDoc] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [downloading, setDownloading] = useState(false);
 
   const updateField = (key: keyof GeneratePayload, value: string | number) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -37,6 +39,24 @@ export default function GeneratePage() {
       setError(err instanceof Error ? err.message : "生成失败");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function downloadAsText() {
+    if (!doc) return;
+    setDownloading(true);
+    try {
+      const element = document.createElement("a");
+      const file = new Blob([doc.content], { type: "text/plain;charset=utf-8" });
+      element.href = URL.createObjectURL(file);
+      element.download = `${doc.title}.txt`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    } catch (err) {
+      setError("下载失败");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -74,7 +94,7 @@ export default function GeneratePage() {
               <input value={form.overdue_period} onChange={(e) => updateField("overdue_period", e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500" required />
             </label>
             <label className="grid gap-1 text-sm font-medium text-slate-700">文书类型
-              <select value={form.document_type} onChange={(e) => updateField("document_type", e.target.value as GeneratePayload["document_type"])} className="rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500">
+              <select value={form.document_type} onChange={(e) => updateField("document_type", e.target.value as any)} className="rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-blue-500">
                 <option value="notice">物业费催缴通知书</option>
                 <option value="deadline_notice">限期缴费通知书</option>
                 <option value="lawyer_letter">律师函草稿</option>
@@ -99,12 +119,15 @@ export default function GeneratePage() {
           </button>
         </form>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900">文书预览</h2>
           {doc ? (
             <>
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex gap-2 justify-end">
                 <button onClick={() => navigator.clipboard.writeText(doc.content)} className="rounded border border-slate-300 px-3 py-2 text-xs font-medium text-slate-600">复制全文</button>
+                <button onClick={downloadAsText} disabled={downloading} className="rounded bg-blue-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-60">
+                  {downloading ? "下载中" : "下TXT"}
+                </button>
               </div>
               <pre className="mt-3 max-h-[620px] overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-4 text-sm leading-7 text-slate-700">{doc.content}</pre>
               <p className="mt-4 text-xs leading-6 text-slate-500">{doc.disclaimer}</p>
@@ -112,7 +135,7 @@ export default function GeneratePage() {
           ) : (
             <div className="mt-6 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-400">填写左侧信息后，文书将在这里显示</div>
           )}
-        </section>
+        </div>
       </div>
     </main>
   );

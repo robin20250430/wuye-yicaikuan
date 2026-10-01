@@ -1,21 +1,40 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
+from ..schemas.common import PaymentResponse
 
 router = APIRouter()
 
 
-class OrderCreateRequest(BaseModel):
-    plan: str = Field(..., min_length=1)
-    amount: float = Field(gt=0)
-    user_id: str | None = None
+class PaymentRequest(BaseModel):
+    order_id: str
+    amount: float
+    method: str = "online"
+
+
+class PaymentResponse(BaseModel):
+    payment_id: str
+    order_id: str
+    status: str
+    amount: float
+    method: str
+    created_at: datetime
 
 
 @router.post("/create")
-def create_order(payload: OrderCreateRequest) -> dict:
+def create_payment(payload: PaymentRequest) -> dict:
     return {
-        "order_id": "order_demo_001",
-        "plan": payload.plan,
-        "amount": payload.amount,
+        "payment_id": f"pay_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+        "order_id": payload.order_id,
         "status": "pending",
-        "payment_url": "https://pay.example.com/demo",
+        "amount": payload.amount,
+        "method": payload.method,
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.post("/confirm")
+def confirm_payment() -> dict:
+    return {"status": "completed", "message": "支付完成"}
