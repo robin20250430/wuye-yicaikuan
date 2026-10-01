@@ -1,58 +1,38 @@
-# 物业易催款
+# 最终产品化增强版
 
-AI 物业费催缴通知书与律师函自动生成平台 MVP。
+## 已实现
 
-## 技术栈
+- SQLite/PostgreSQL 兼容的 SQLAlchemy 持久化：用户、订单、文书
+- PBKDF2 密码哈希与 JWT 登录令牌
+- OpenAI-compatible AI 生成接口，未配置密钥时自动使用模板回退
+- Stripe Checkout 可选接入；未配置 Stripe 时提供本地 mock 支付
+- CSV/XLSX 上传解析与批次下载
+- 文书在线生成、复制、TXT 下载
+- FastAPI Swagger 文档
 
-- `frontend`: Next.js 14 + TypeScript + Tailwind CSS
-- `backend`: FastAPI + Pydantic
-- `docker-compose`: 一键启动前后端服务
-
-## 本地运行
-
-### 方式一：Docker Compose
+## 启动
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-- 前端：http://localhost:3000
-- 后端 API：http://localhost:8000
-- API 文档：http://localhost:8000/docs
+生产环境请至少修改 `JWT_SECRET`，并配置 PostgreSQL、`OPENAI_API_KEY` 与 Stripe 密钥。将 `DATABASE_URL` 设置为例如：
 
-### 方式二：分别运行
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+```text
+postgresql+psycopg://user:password@db:5432/wuye
 ```
 
-另开终端：
+## 真实 AI
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+填写 `OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `OPENAI_MODEL`。DeepSeek 等 OpenAI-compatible 服务可通过修改 `OPENAI_BASE_URL` 与模型名接入。系统调用失败会回退到确定性模板，不会阻塞业务流程。
 
-## 当前 MVP 能力
+## 支付
 
-- SEO 友好的产品首页
-- 物业费催缴文书生成表单
-- 催缴通知书、限期缴费通知书、律师函、起诉前告知书四种文书类型
-- 后端模板化生成服务（未配置 AI 时可直接运行）
-- 在线预览、复制文书内容
-- 物业费欠费计算器
-- FastAPI Swagger 接口文档
+- `STRIPE_SECRET_KEY` 为空：使用 mock 支付，仅适合本地演示。
+- 配置 Stripe：调用 `/api/payments/create`，请求 `{"order_id":"...","method":"stripe"}` 获取 Checkout URL。
+- 生产环境必须使用 Stripe 官方签名校验处理 webhook，并把支付成功以 webhook 作为最终依据；当前 webhook 入口仅是演示适配层。
 
-## 环境变量
+## 合规
 
-复制 `.env.example` 为 `.env`，生产环境请替换密钥。AI 接口为可选配置；未配置时使用安全的模板生成逻辑。
-
-## 合规说明
-
-本项目生成内容仅供信息整理和文书草拟参考，不构成法律意见，也不保证特定法律效果。正式发函或提起诉讼前，应由物业公司核验合同、欠费事实及当地法规，必要时咨询执业律师。
+所有生成文书均为草稿和信息整理参考，不构成法律意见，不保证特定法律效果。上线前应补充隐私政策、数据保留策略、访问控制、审计日志和正式支付 webhook 验签。

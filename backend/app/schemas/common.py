@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 class HealthResponse(BaseModel):
@@ -38,13 +38,6 @@ class CalculatorResponse(BaseModel):
     overdue_days: int
     note: str
 
-class TemplateItem(BaseModel):
-    id: str
-    title: str
-    category: str
-    description: str
-    price: str
-
 class ArticleSummary(BaseModel):
     id: str
     slug: str
@@ -63,11 +56,6 @@ class EnterpriseBatchResponse(BaseModel):
     generated_count: int
     status: str
     message: str
-
-class OrderRequest(BaseModel):
-    plan: str
-    amount: float
-    user_id: str | None = None
 
 class OrderResponse(BaseModel):
     order_id: str
@@ -92,10 +80,7 @@ class UserProfile(BaseModel):
     role: str = "user"
     created_at: datetime
 
-class PaymentResponse(BaseModel):
-    payment_id: str
-    order_id: str
-    status: str
-    amount: float
-    method: str
-    created_at: datetime
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserProfile

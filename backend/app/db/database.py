@@ -1,10 +1,12 @@
+import hashlib
+import hmac
+import os
 from datetime import datetime, timezone
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import DateTime, Float, String, Text, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
-DATABASE_URL = "sqlite+aiosqlite:///./app.db"
-engine = create_async_engine(DATABASE_URL, echo=False)
+from ..config import settings
 
 
 class Base(DeclarativeBase):
@@ -13,45 +15,55 @@ class Base(DeclarativeBase):
 
 class UserORM(Base):
     __tablename__ = "users"
-    id: Mapped[str] = mapped_column(primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(unique=True, index=True)
-    company_name: Mapped[str | None]
-    role: Mapped[str] = mapped_column(default="user")
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
-
-
-class OrderORM(Base):
-    __tablename__ = "orders"
-    id: Mapped[str] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[str | None] = mapped_column(index=True)
-    plan: Mapped[str]
-    amount: Mapped[float]
-    status: Mapped[str] = mapped_column(default="pending")
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    role: Mapped[str] = mapped_column(String(32), default="user")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class DocumentORM(Base):
     __tablename__ = "documents"
-    id: Mapped[str] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[str | None] = mapped_column(index=True)
-    document_type: Mapped[str]
-    title: Mapped[str]
-    content: Mapped[str]
-    disclaimer: Mapped[str]
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    document_type: Mapped[str] = mapped_column(String(64))
+    title: Mapped[str] = mapped_column(String(255))
+    content: Mapped[str] = mapped_column(Text)
+    disclaimer: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
-class DebtRecordORM(Base):
-    __tablename__ = "debt_records"
-    id: Mapped[str] = mapped_column(primary_key=True, index=True)
-    batch_id: Mapped[str | None] = mapped_column(index=True)
-    owner_name: Mapped[str]
-    room_no: Mapped[str]
-    amount: Mapped[float]
-    debt_period: Mapped[str]
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+class OrderORM(Base):
+    __tablename__ = "orders"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    plan: Mapped[str] = mapped_column(String(32))
+    amount: Mapped[float] = mapped_column(Float)
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    provider: Mapped[str] = mapped_column(String(32), default="mock")
+    provider_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
-async def init_db() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+engine = create_engine(settings.database_url, future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+def init_db() -> None:
+    Base.metadata.create_all(bind=engine)
+
+
+def hash_password(password: str) -> str:
+    salt = os.urandom(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 210_000)
+    return f"pbkdf2$210000${salt.hex()}${digest.hex()}"
+
+
+def verify_password(password: str, encoded: str) -> bool:
+    try:
+        _, rounds, salt_hex, digest_hex = encoded.split("$")
+        actual = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt_hex), int(rounds)).hex()
+        return hmac.compare_digest(actual, digest_hex)
+    except (ValueError, TypeError):
+        return False
