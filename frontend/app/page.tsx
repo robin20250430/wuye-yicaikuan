@@ -1,18 +1,37 @@
 import Link from "next/link";
+import HeroSection from "../components/HeroSection";
+
+const featureCards = [
+  { title: "AI文书生成", text: "模板+变量+AI润色，快速生成专业文书草稿。" },
+  { title: "批量处理", text: "支持Excel导入与批量生成，提升催缴效率。" },
+  { title: "合规提醒", text: "生成内容保留参考性质，强调事实核验和法律风险提示。" },
+];
 
 export default function Home() {
-  return <main className="min-h-screen">
-    <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-      <Link href="/" className="text-xl font-bold text-blue-700">物业易催款</Link>
-      <div className="flex gap-5 text-sm text-slate-600"><Link href="/generate">免费生成</Link><a href="#features">产品能力</a><a href="#notice">合规说明</a></div>
-    </nav>
-    <section className="mx-auto max-w-6xl px-6 pb-20 pt-20"><div className="max-w-3xl">
-      <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700">AI + 法律模板 + 催缴自动化</span>
-      <h1 className="mt-6 text-5xl font-bold leading-tight tracking-tight">3分钟生成专业物业费催缴通知书</h1>
-      <p className="mt-6 text-lg leading-8 text-slate-600">帮助物业公司快速整理欠费信息，生成催缴通知书、限期缴费通知书及律师函草稿，减少重复文书工作。</p>
-      <div className="mt-8 flex gap-4"><Link href="/generate" className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">免费生成催缴函</Link><a href="#features" className="rounded-lg border border-slate-300 px-5 py-3 font-semibold">了解产品能力</a></div>
-    </div></section>
-    <section id="features" className="mx-auto grid max-w-6xl gap-5 px-6 pb-20 md:grid-cols-3">{[["模板化生成","固定字段与文书模板结合，结果更稳定"],["批量处理","后续支持 Excel 导入与批量生成"],["合规提醒","生成内容明确标注参考性质，避免过度承诺"]].map(([title, text]) => <div key={title} className="rounded-xl bg-white p-6 shadow-sm"><h2 className="font-bold">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></div>)}</section>
-    <section id="notice" className="mx-auto max-w-6xl px-6 pb-12 text-sm text-slate-500">生成内容仅供文书草拟和信息整理参考，不构成法律意见。正式使用前请核验合同、欠费事实及当地法规，必要时咨询执业律师。</section>
-  </main>;
+  return (
+    <main className="min-h-screen">
+      <HeroSection />
+      <section id="features" className="mx-auto grid max-w-6xl gap-5 px-6 pb-20 md:grid-cols-3">
+        {featureCards.map((item) => (
+          <div key={item.title} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-800">{item.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{item.text}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white">
+          <h3 className="text-2xl font-bold">适合物业公司快速处理欠费问题</h3>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50">
+            面向中小物业公司，帮助减少人工文书重复劳动，提升通知效率和催缴沟通质量。
+          </p>
+          <div className="mt-6 flex gap-4">
+            <Link href="/generate" className="rounded-lg bg-white px-4 py-3 font-semibold text-blue-700">免费生成</Link>
+            <Link href="/enterprise" className="rounded-lg border border-white/50 px-4 py-3 font-semibold text-white">企业服务</Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
