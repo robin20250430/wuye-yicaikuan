@@ -75,3 +75,19 @@ class OrderResponse(BaseModel):
     amount: float
     status: str
     payment_url: str | None = None
+
+class UserCreateRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=6)
+    company_name: str | None = None
+
+class UserLoginRequest(BaseModel):
+    email: str
+    password: str
+
+class UserProfile(BaseModel):
+    id: str
+    email: str
+    company_name: str | None = None
+    role: str = "user"
+    created_at: datetime
