@@ -9,14 +9,6 @@ from ...schemas.common import EnterpriseBatchResponse
 router = APIRouter()
 
 
-class EnterpriseUploadResponse(BaseModel):
-    batch_id: str
-    total_rows: int
-    generated_count: int
-    status: str
-    message: str
-
-
 @router.post("/upload", response_model=EnterpriseBatchResponse)
 async def upload_file(file: UploadFile = File(...)) -> EnterpriseBatchResponse:
     if not file.filename:
@@ -27,14 +19,13 @@ async def upload_file(file: UploadFile = File(...)) -> EnterpriseBatchResponse:
     content = await file.read()
     rows = 0
     if file.filename.lower().endswith(".csv"):
-        rows = len(content.decode("utf-8", errors="ignore").splitlines()) - 1
-    else:
-        rows = 0
+        rows = max(len(content.decode("utf-8", errors="ignore").splitlines()) - 1, 0)
 
+    batch_id = f"batch_{uuid4().hex[:8]}"
     return EnterpriseBatchResponse(
-        batch_id=f"batch_{uuid4().hex[:8]}",
-        total_rows=max(rows, 0),
-        generated_count=max(rows, 0),
+        batch_id=batch_id,
+        total_rows=rows,
+        generated_count=rows,
         status="processed",
         message="上传成功，已进入批量生成队列。",
     )

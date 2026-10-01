@@ -11,25 +11,20 @@ router = APIRouter()
 USERS: dict[str, dict] = {}
 
 
-@router.post("/register", response_model=UserProfile)
-def register(payload: UserCreateRequest) -> UserProfile:
-    if payload.email in USERS:
-        raise HTTPException(status_code=400, detail="用户已存在")
-    user_id = f"user_{uuid4().hex[:8]}"
-    user = {
-        "id": user_id,
-        "email": payload.email,
-        "company_name": payload.company_name,
-        "role": "user",
-        "created_at": datetime.now(timezone.utc),
-    }
-    USERS[payload.email] = user
+class ListUserResponse(BaseModel):
+    total: int
+    users: list[UserProfile]
+
+
+@router.get("/profile", response_model=UserProfile)
+def get_profile(email: str) -> UserProfile:
+    user = USERS.get(email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="用户不存在")
     return UserProfile(**user)
 
 
-@router.post("/login", response_model=UserProfile)
-def login(payload: UserLoginRequest) -> UserProfile:
-    user = USERS.get(payload.email)
-    if user is None or payload.password != "demo-password":
-        raise HTTPException(status_code=401, detail="用户名或密码错误")
-    return UserProfile(**user)
+@router.get("/", response_model=ListUserResponse)
+def list_users() -> ListUserResponse:
+    items = [UserProfile(**user) for user in USERS.values()]
+    return ListUserResponse(total=len(items), users=items)

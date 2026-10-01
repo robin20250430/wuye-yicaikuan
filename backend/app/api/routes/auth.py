@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ...schemas.common import UserCreateRequest, UserLoginRequest, UserProfile
+from ..schemas.common import UserCreateRequest, UserLoginRequest, UserProfile
 
 router = APIRouter()
 
@@ -30,6 +30,14 @@ def register(payload: UserCreateRequest) -> UserProfile:
 @router.post("/login", response_model=UserProfile)
 def login(payload: UserLoginRequest) -> UserProfile:
     user = USERS.get(payload.email)
-    if not user or payload.password != "demo-password":
+    if user is None or payload.password != "demo-password":
         raise HTTPException(status_code=401, detail="用户名或密码错误")
+    return UserProfile(**user)
+
+
+@router.get("/profile")
+def profile(email: str) -> UserProfile:
+    user = USERS.get(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
     return UserProfile(**user)

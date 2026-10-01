@@ -1,13 +1,18 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from ..schemas.common import DocumentGenerateRequest, GeneratedDocument
 from ..services.ai_service import generate_document_with_ai_fallback
 
 router = APIRouter()
+
+
+class BatchUploadRequest(BaseModel):
+    file_name: str = Field(..., min_length=1)
+    rows: list[dict] = Field(default_factory=list)
 
 
 @router.post("/generate", response_model=GeneratedDocument)
@@ -25,19 +30,25 @@ def get_templates() -> list[dict]:
     ]
 
 
-class BatchUploadRequest(BaseModel):
-    file_name: str = Field(..., min_length=1)
-    rows: list[dict] = Field(default_factory=list)
-
-
 @router.post("/batch-upload")
 def upload_batch(rows: BatchUploadRequest) -> dict:
-    generated_count = len(rows.rows)
+    if not rows.rows:
+        raise HTTPException(status_code=400, detail="没有可处理的数据行")
     return {
         "batch_id": str(uuid4()),
         "file_name": rows.file_name,
-        "total_rows": generated_count,
-        "generated_count": generated_count,
+        "total_rows": len(rows.rows),
+        "generated_count": len(rows.rows),
         "status": "uploaded",
         "message": "文件已接收，进入批量生成队列。",
+    }
+
+
+@router.post("/download")
+def download_document() -> dict:
+    return {
+        "file_name": "物业催缴通知书.txt",
+        "download_url": "/downloads/demo_document.txt",
+        "format": "txt",
+        "message": "下载链接已生成。",
     }
