@@ -1,6 +1,70 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+class LawyerProfile(BaseModel):
+    id: str
+    name: str
+    specialty: str
+    experience_years: int
+    phone: str
+    email: str
+    office_address: str
+    bio: str
+    avatar_url: str | None = None
+    success_rate: float = 0.95
+    hourly_rate: int = 500
+    total_cases: int = 1200
+    created_at: datetime
+
+class LawyerListResponse(BaseModel):
+    total: int
+    lawyers: list[LawyerProfile]
+
+class DashboardStats(BaseModel):
+    total_documents: int
+    total_orders: int
+    total_revenue: float
+    active_users: int
+    this_month_revenue: float
+    this_month_documents: int
+
+class OrderListItem(BaseModel):
+    id: str
+    plan: str
+    amount: float
+    status: str
+    created_at: datetime
+
+class OrderListResponse(BaseModel):
+    total: int
+    items: list[OrderListItem]
+
+class DocumentListItem(BaseModel):
+    id: str
+    document_type: str
+    title: str
+    owner_name: str
+    property_address: str
+    overdue_amount: float
+    status: str
+    created_at: datetime
+
+class DocumentListResponse(BaseModel):
+    total: int
+    items: list[DocumentListItem]
+
+class BatchTaskItem(BaseModel):
+    id: str
+    file_name: str
+    total_rows: int
+    generated_count: int
+    status: str
+    created_at: datetime
+
+class BatchTaskListResponse(BaseModel):
+    total: int
+    items: list[BatchTaskItem]
+
 class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
